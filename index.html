@@ -8,7 +8,7 @@
                  maximum-scale=1.0, user-scalable=no" />
   <meta name="theme-color" content="#0a001f" />
   <meta name="description"
-        content="Neon Arena – Tower Defense néon en temps réel. Déploie tes unités, protège ton noyau, écrase l'ennemi." />
+        content="NΞØN ΔRΞNA ᶜˡᵃˢʰ – Tower Defense néon en temps réel." />
 
   <!-- ─── Open Graph ────────────────────────────────────────────── -->
   <meta property="og:title"       content="NΞØN ΔRΞNA ᶜˡᵃˢʰ" />
@@ -35,7 +35,7 @@
   <!-- ─── Phaser 3 ─────────────────────────────────────────────── -->
   <script defer src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
 
-  <!-- ─── Styles ───────────────────────────────────────────────── -->
+  <!-- ─── Styles externes ──────────────────────────────────────── -->
   <link rel="stylesheet" href="style.css" />
 
   <style>
@@ -43,7 +43,7 @@
 
     html, body {
       height: 100%; overflow: hidden;
-      background: #0a001f;
+      background: #04000e;
       font-family: 'Orbitron', 'Arial Black', sans-serif;
       -webkit-tap-highlight-color: transparent;
       user-select: none;
@@ -51,146 +51,163 @@
 
     #game-container { width: 100%; height: 100%; }
 
-    /* ══ LOADER ══════════════════════════════════════════════════ */
+    /* ══════════════════════════════════════════════════════════
+       LOADER
+    ══════════════════════════════════════════════════════════ */
     #loader {
       position: fixed; inset: 0;
       z-index: 9999;
       overflow: hidden;
       display: flex;
       flex-direction: column;
-      /* Titre en haut, barre en bas */
       align-items: center;
       justify-content: space-between;
-      padding: clamp(36px, 6vh, 72px) clamp(20px, 5vw, 60px)
-               clamp(28px, 5vh, 56px);
-      transition: opacity 0.8s ease;
+      /* Fond très sombre pour les bandes autour de l'image */
+      background: #04000e;
+      padding: clamp(28px, 5vh, 60px) clamp(16px, 4vw, 48px)
+               clamp(24px, 4vh, 48px);
+      transition: opacity 0.9s ease;
     }
 
     #loader.hidden { opacity: 0; pointer-events: none; }
 
-    /* Image de fond plein écran */
+    /* ── Image : visible en entier, sans recadrage ───────────── */
     #loader-bg {
-      position: absolute; inset: 0;
-      width: 100%; height: 100%;
-      object-fit: cover;
-      object-position: center;
-      filter: brightness(0.68) saturate(1.25);
+      position: absolute;
+      /* Centrée verticalement, légèrement remontée pour laisser
+         la barre de progression visible en bas                   */
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -48%);
+
+      /* Taille max : l'image tient entièrement dans l'écran     */
+      max-width:  100%;
+      max-height: 88vh;   /* laisse 12 vh pour titre + barre     */
+      width: auto;
+      height: auto;
+
+      /* Rendu propre */
+      object-fit: contain;
+      display: block;
+
+      /* Légère correction de luminosité */
+      filter: brightness(0.80) saturate(1.15);
     }
 
-    /* Voile haut → bas pour lisibilité titre ET barre */
+    /* Voile : sombre en haut et en bas, transparent au centre   */
     #loader-veil {
       position: absolute; inset: 0;
       background:
         linear-gradient(
           to bottom,
-          rgba(10, 0, 31, 0.72)  0%,    /* haut : titre lisible   */
-          rgba(10, 0, 31, 0.10) 30%,    /* milieu : image visible */
-          rgba(10, 0, 31, 0.10) 65%,    /* milieu : image visible */
-          rgba(10, 0, 31, 0.88) 100%    /* bas : barre lisible    */
+          rgba(4,  0, 14, 0.82)  0%,
+          rgba(4,  0, 14, 0.05) 22%,
+          rgba(4,  0, 14, 0.00) 45%,
+          rgba(4,  0, 14, 0.00) 72%,
+          rgba(4,  0, 14, 0.88) 100%
         );
       pointer-events: none;
     }
 
-    /* ── Bloc titre (haut) ───────────────────────────────────── */
+    /* ══ BLOC HAUT — titre ══════════════════════════════════════ */
     #loader-top {
       position: relative;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 10px;
-      /* Légère ligne déco sous le titre */
+      gap: 8px;
     }
 
+    /* Ligne déco sous le tagline */
     #loader-top::after {
       content: '';
       display: block;
-      width: clamp(120px, 40vw, 320px);
+      width: clamp(100px, 38vw, 300px);
       height: 1px;
-      margin-top: 14px;
+      margin-top: 10px;
       background: linear-gradient(
         90deg,
         transparent,
-        rgba(255, 208, 0, 0.6),
-        rgba(79, 195, 247, 0.6),
+        rgba(180, 100, 255, 0.55),
+        rgba(255, 140,  80, 0.55),
         transparent
       );
     }
 
-    /* ── Titre cyberpunk doré / bleu nuancé ─────────────────── */
+    /* ── Titre : violet → rose → orange (doux pour les yeux) ─── */
     #loader-title {
       font-family: 'Orbitron', 'Arial Black', sans-serif;
       font-weight: 900;
-      font-size: clamp(28px, 6.5vw, 72px);
-      letter-spacing: clamp(2px, 1vw, 8px);
-      text-transform: uppercase;
+      font-size: clamp(26px, 6vw, 68px);
+      letter-spacing: clamp(2px, 0.9vw, 7px);
       text-align: center;
       line-height: 1.1;
 
-      /* Dégradé doré → bleu */
+      /* ✦ Nouvelle palette : violet électrique → rose → orange chaud */
       background: linear-gradient(
-        135deg,
-        #ffe066  0%,
-        #ffd000 20%,
-        #fff8c0 35%,
-        #4fc3f7 55%,
-        #0ea5e9 72%,
-        #ffd000 88%,
-        #ffe066 100%
+        125deg,
+        #c084fc  0%,    /* violet pastel     */
+        #a855f7 15%,    /* violet vif        */
+        #e879f9 30%,    /* rose magenta      */
+        #fb923c 50%,    /* orange chaud      */
+        #f472b6 68%,    /* rose bonbon       */
+        #a78bfa 85%,    /* violet lavande    */
+        #c084fc 100%
       );
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
-      background-size: 250% 250%;
-      animation: shimmer 4s linear infinite;
+      background-size: 220% 220%;
 
-      /* Glow réduit — subtil et élégant */
+      /* Glow subtil — intensité réduite de moitié vs avant */
       filter:
-        drop-shadow(0 0  4px rgba(255, 208,  0, 0.80))
-        drop-shadow(0 0 12px rgba(255, 208,  0, 0.45))
-        drop-shadow(0 0 22px rgba(14, 165, 233, 0.35));
+        drop-shadow(0 0  3px rgba(168, 85, 247, 0.70))
+        drop-shadow(0 0 10px rgba(168, 85, 247, 0.35))
+        drop-shadow(0 0 20px rgba(251, 146, 60, 0.25));
 
-      animation: shimmer 4s linear infinite, pulse-glow 3s ease-in-out infinite;
+      animation:
+        title-shimmer  5s linear infinite,
+        title-pulse    3.5s ease-in-out infinite;
     }
 
-    /* Superscript "ᶜˡᵃˢʰ" — plus petit, même dégradé */
     #loader-title sup {
-      font-size: 0.38em;
+      font-size: 0.36em;
       vertical-align: super;
       letter-spacing: 1px;
-      opacity: 0.85;
+      opacity: 0.80;
     }
 
     /* Tagline */
     #loader-tagline {
-      font-size: clamp(9px, 1.4vw, 14px);
+      font-size: clamp(9px, 1.3vw, 13px);
       font-weight: 500;
-      letter-spacing: clamp(3px, 1.2vw, 9px);
-      color: rgba(79, 195, 247, 0.80);
-      text-shadow: 0 0 8px rgba(79, 195, 247, 0.40);
+      letter-spacing: clamp(3px, 1vw, 8px);
+      color: rgba(192, 132, 252, 0.75);
+      text-shadow: 0 0 8px rgba(192, 132, 252, 0.30);
       text-transform: uppercase;
     }
 
-    /* ── Bloc bas (barre + hint) ─────────────────────────────── */
+    /* ══ BLOC BAS — progression ═════════════════════════════════ */
     #loader-bottom {
       position: relative;
       width: 100%;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 14px;
+      gap: 12px;
     }
 
     #loader-progress-wrap {
-      width: min(520px, 88vw);
+      width: min(500px, 88vw);
     }
 
     #loader-status {
       display: flex;
       justify-content: space-between;
-      font-size: clamp(9px, 1.3vw, 12px);
+      font-size: clamp(9px, 1.2vw, 11px);
       letter-spacing: 2px;
-      color: rgba(255, 208, 0, 0.80);
-      margin-bottom: 8px;
+      color: rgba(251, 146, 60, 0.85);
+      margin-bottom: 7px;
       text-transform: uppercase;
     }
 
@@ -199,29 +216,35 @@
       background: rgba(255, 255, 255, 0.07);
       border-radius: 99px;
       overflow: hidden;
-      box-shadow: 0 0 0 1px rgba(255, 208, 0, 0.18);
+      box-shadow: 0 0 0 1px rgba(168, 85, 247, 0.20);
     }
 
     #loader-bar-fill {
       height: 100%; width: 0%;
       border-radius: 99px;
-      background: linear-gradient(90deg, #ffd000, #4fc3f7, #ffd000);
+      /* Barre : même palette que le titre */
+      background: linear-gradient(
+        90deg,
+        #a855f7, #e879f9, #fb923c, #a855f7
+      );
       background-size: 200% 100%;
-      box-shadow: 0 0 8px #ffd000, 0 0 18px #4fc3f7;
+      box-shadow:
+        0 0  6px rgba(168,  85, 247, 0.80),
+        0 0 14px rgba(251, 146,  60, 0.50);
       animation:
         fill-bar    7s cubic-bezier(0.4, 0, 0.2, 1) forwards,
-        bar-shimmer 1.8s linear infinite;
+        bar-shimmer 2s linear infinite;
     }
 
     #loader-hint {
-      font-size: clamp(9px, 1.2vw, 11px);
+      font-size: clamp(9px, 1.1vw, 11px);
       letter-spacing: 3px;
-      color: rgba(255, 255, 255, 0.25);
+      color: rgba(255, 255, 255, 0.22);
       text-transform: uppercase;
-      animation: blink 2s ease-in-out infinite;
+      animation: blink 2.2s ease-in-out infinite;
     }
 
-    /* ── Keyframes ───────────────────────────────────────────── */
+    /* ══ Keyframes ══════════════════════════════════════════════ */
     @keyframes fill-bar {
       0%   { width:   0%; }
       15%  { width:  12%; }
@@ -238,33 +261,33 @@
       100% { background-position:   0% center; }
     }
 
-    @keyframes shimmer {
+    @keyframes title-shimmer {
       0%   { background-position: 200% 50%; }
       100% { background-position:   0% 50%; }
     }
 
-    @keyframes pulse-glow {
+    @keyframes title-pulse {
       0%, 100% {
         filter:
-          drop-shadow(0 0  4px rgba(255, 208,  0, 0.80))
-          drop-shadow(0 0 12px rgba(255, 208,  0, 0.45))
-          drop-shadow(0 0 22px rgba(14, 165, 233, 0.35));
+          drop-shadow(0 0  3px rgba(168, 85, 247, 0.70))
+          drop-shadow(0 0 10px rgba(168, 85, 247, 0.35))
+          drop-shadow(0 0 20px rgba(251, 146, 60, 0.25));
       }
       50% {
         filter:
-          drop-shadow(0 0  6px rgba(255, 208,  0, 1.00))
-          drop-shadow(0 0 18px rgba(255, 208,  0, 0.65))
-          drop-shadow(0 0 32px rgba(14, 165, 233, 0.55));
+          drop-shadow(0 0  5px rgba(168, 85, 247, 0.90))
+          drop-shadow(0 0 15px rgba(168, 85, 247, 0.55))
+          drop-shadow(0 0 28px rgba(251, 146, 60, 0.40));
       }
     }
 
     @keyframes blink {
-      0%, 100% { opacity: 0.25; }
-      50%       { opacity: 0.70; }
+      0%, 100% { opacity: 0.22; }
+      50%       { opacity: 0.65; }
     }
 
     @media (prefers-reduced-motion: reduce) {
-      #loader-bar-fill { animation: fill-bar 7s linear forwards; }
+      #loader-bar-fill  { animation: fill-bar 7s linear forwards; }
       #loader-title, #loader-hint { animation: none; }
     }
   </style>
@@ -272,16 +295,18 @@
 
 <body>
 
-  <!-- ═══ LOADER ══════════════════════════════════════════════════ -->
+  <!-- ═══ LOADER SPLASH ═══════════════════════════════════════════ -->
   <div id="loader" role="status" aria-label="Chargement de NΞØN ΔRΞNA ᶜˡᵃˢʰ">
 
+    <!-- Image complète, sans recadrage -->
     <img id="loader-bg"
          src="assets/neon-arena-clash1.png"
          alt="" aria-hidden="true" />
 
+    <!-- Voile dégradé -->
     <div id="loader-veil" aria-hidden="true"></div>
 
-    <!-- HAUT : titre + tagline -->
+    <!-- HAUT : titre -->
     <div id="loader-top">
       <h1 id="loader-title">NΞØN&nbsp;ΔRΞNA<sup>ᶜˡᵃˢʰ</sup></h1>
       <p  id="loader-tagline">Clash&nbsp;&nbsp;·&nbsp;&nbsp;Tower&nbsp;Defense&nbsp;&nbsp;·&nbsp;&nbsp;Néon</p>
@@ -324,8 +349,8 @@
         { at: 0.48, label: 'Compilation shaders…' },
         { at: 0.63, label: 'Génération arène…'    },
         { at: 0.80, label: 'Synchro réseau…'      },
-        { at: 0.94, label: 'Finalisation…'         },
-        { at: 1.00, label: 'Prêt !'                },
+        { at: 0.94, label: 'Finalisation…'        },
+        { at: 1.00, label: 'Prêt !'               },
       ];
 
       const loader      = document.getElementById('loader');
@@ -334,8 +359,7 @@
       const statusPct   = document.getElementById('loader-status-pct');
 
       const start = performance.now();
-      let stepIndex = 0;
-      let rafId;
+      let stepIndex = 0, rafId;
 
       function tick(now) {
         const progress = Math.min((now - start) / DURATION, 1);
@@ -354,18 +378,16 @@
 
       rafId = requestAnimationFrame(tick);
 
-      let windowLoaded = false;
-      let timerDone    = false;
+      let windowLoaded = false, timerDone = false;
 
       function tryHide() {
-        if (windowLoaded && timerDone) {
-          cancelAnimationFrame(rafId);
-          loader.classList.add('hidden');
-          loader.addEventListener('transitionend', () => loader.remove(), { once: true });
-        }
+        if (!windowLoaded || !timerDone) return;
+        cancelAnimationFrame(rafId);
+        loader.classList.add('hidden');
+        loader.addEventListener('transitionend', () => loader.remove(), { once: true });
       }
 
-      setTimeout(() => { timerDone = true;    tryHide(); }, DURATION);
+      setTimeout(() => { timerDone    = true; tryHide(); }, DURATION);
       window.addEventListener('load', () => { windowLoaded = true; tryHide(); });
     })();
   </script>
