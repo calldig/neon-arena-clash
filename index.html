@@ -10,56 +10,348 @@
   <meta name="description"
         content="Neon Arena – Tower Defense néon en temps réel. Déploie tes unités, protège ton noyau, écrase l'ennemi." />
 
-  <!-- ─── Open Graph (partage réseaux sociaux) ─────────────────── -->
+  <!-- ─── Open Graph ────────────────────────────────────────────── -->
   <meta property="og:title"       content="Neon Arena" />
-  <meta property="og:description" content="Neon Arena – Tower Defense néon en temps réel. Déploie tes unités, protège ton noyau, écrase l'ennemi." />
+  <meta property="og:description" content="Tower Defense néon en temps réel." />
   <meta property="og:image"       content="assets/neon-arena-clash1.png" />
   <meta property="og:url"         content="https://neon-arena-clash.vercel.app" />
   <meta property="og:type"        content="website" />
 
-  <!-- ─── Favicon SVG inline néon ──────────────────────────────── -->
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='45' fill='none' stroke='%2300ffff' stroke-width='8'/><circle cx='50' cy='50' r='30' fill='none' stroke='%23ff00ff' stroke-width='6'/><text x='50' y='60' font-family='Arial Black' font-size='40' fill='%23ffffff' text-anchor='middle'>NA</text></svg>" />
+  <!-- ─── Favicon SVG inline ───────────────────────────────────── -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,
+    <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'>
+      <circle cx='50' cy='50' r='45' fill='none' stroke='%2300ffff' stroke-width='8'/>
+      <circle cx='50' cy='50' r='30' fill='none' stroke='%23ff00ff' stroke-width='6'/>
+      <text x='50' y='60' font-family='Arial Black' font-size='40'
+            fill='%23ffffff' text-anchor='middle'>NA</text>
+    </svg>" />
 
-  <!-- ─── Google Fonts (Orbitron pour un look cyberpunk) ───────── -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
+  <!-- ─── Google Fonts ──────────────────────────────────────────── -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&display=swap"
+        rel="stylesheet" />
 
-  <!-- ─── Styles critiques inline (reset + loader) ─────────────── -->
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body { height: 100%; overflow: hidden; background: #0a001f; font-family: 'Orbitron', sans-serif; }
-    #game-container { width: 100%; height: 100%; }
-    #loader { position: fixed; inset: 0; background: #0a001f; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; transition: opacity 0.8s; }
-    #loader.hidden { opacity: 0; pointer-events: none; }
-    #loader-ring { width: 80px; height: 80px; border: 6px solid #00ffff; border-top: 6px solid transparent; border-radius: 50%; animation: spin 1.2s linear infinite; margin-bottom: 20px; }
-    #loader-label { color: #00ffff; font-size: 24px; text-shadow: 0 0 10px #00ffff; }
-    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-  </style>
-
-  <!-- ─── Phaser CDN (defer pour perf) ─────────────────────────── -->
+  <!-- ─── Phaser 3 ─────────────────────────────────────────────── -->
   <script defer src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
+
+  <!-- ─── Styles ───────────────────────────────────────────────── -->
+  <link rel="stylesheet" href="style.css" />
+
+  <!-- ─── Styles critiques inline (anti-FOUC) ──────────────────── -->
+  <style>
+    /* Reset minimal */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      height: 100%; overflow: hidden;
+      background: #0a001f;
+      font-family: 'Orbitron', 'Arial Black', sans-serif;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    #game-container { width: 100%; height: 100%; }
+
+    /* ── Loader ─────────────────────────────────────────────────── */
+    #loader {
+      position: fixed; inset: 0;
+      z-index: 9999;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;   /* HUD en bas, image en fond */
+      transition: opacity 0.8s ease;
+    }
+
+    #loader.hidden { opacity: 0; pointer-events: none; }
+
+    /* Image de fond plein écran */
+    #loader-bg {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
+      object-fit: cover;
+      object-position: center;
+      /* Légère mise en valeur du titre */
+      filter: brightness(0.72) saturate(1.2);
+    }
+
+    /* Voile gradient en bas pour lisibilité du HUD */
+    #loader-veil {
+      position: absolute; inset: 0;
+      background: linear-gradient(
+        to bottom,
+        transparent          0%,
+        transparent          45%,
+        rgba(10, 0, 31, 0.6) 70%,
+        rgba(10, 0, 31, 0.97) 100%
+      );
+      pointer-events: none;
+    }
+
+    /* ── Titre cyberpunk doré / bleu ──────────────────────────── */
+    #loader-title {
+      position: relative;           /* au-dessus du voile */
+      font-family: 'Orbitron', 'Arial Black', sans-serif;
+      font-weight: 900;
+      font-size: clamp(36px, 8vw, 96px);
+      letter-spacing: clamp(4px, 1.5vw, 14px);
+      text-transform: uppercase;
+      text-align: center;
+
+      /* Dégradé doré → bleu nuancé */
+      background: linear-gradient(
+        135deg,
+        #ffe066 0%,
+        #ffd000 18%,
+        #fff5aa 32%,
+        #4fc3f7 52%,
+        #0ea5e9 68%,
+        #ffd000 85%,
+        #ffe066 100%
+      );
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      background-size: 200% 200%;
+      animation: shimmer 3s linear infinite;
+
+      /* Glow électrique multicouche */
+      filter:
+        drop-shadow(0 0  6px rgba(255, 208,   0, 0.95))
+        drop-shadow(0 0 18px rgba(255, 208,   0, 0.70))
+        drop-shadow(0 0 36px rgba(14,  165, 233, 0.55))
+        drop-shadow(0 0 60px rgba(14,  165, 233, 0.30));
+
+      /* Pulsation légère */
+      animation: shimmer 3s linear infinite, pulse-filter 2.4s ease-in-out infinite;
+
+      margin-bottom: 12px;
+    }
+
+    /* Sous-titre / tagline */
+    #loader-tagline {
+      position: relative;
+      font-size: clamp(11px, 1.8vw, 18px);
+      font-weight: 500;
+      letter-spacing: clamp(3px, 1vw, 8px);
+      color: rgba(79, 195, 247, 0.85);
+      text-shadow: 0 0 10px rgba(79, 195, 247, 0.6);
+      text-transform: uppercase;
+      margin-bottom: 40px;
+    }
+
+    /* ── Barre de progression ─────────────────────────────────── */
+    #loader-progress-wrap {
+      position: relative;
+      width: min(480px, 80vw);
+      margin-bottom: 18px;
+    }
+
+    /* Labels au-dessus de la barre */
+    #loader-status {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      letter-spacing: 2px;
+      color: rgba(255, 208, 0, 0.75);
+      margin-bottom: 8px;
+      text-transform: uppercase;
+    }
+
+    /* Piste de la barre */
+    #loader-bar-track {
+      width: 100%; height: 6px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 99px;
+      overflow: hidden;
+      box-shadow: 0 0 0 1px rgba(255, 208, 0, 0.2);
+    }
+
+    /* Remplissage animé sur 7 s */
+    #loader-bar-fill {
+      height: 100%;
+      width: 0%;
+      border-radius: 99px;
+      background: linear-gradient(90deg, #ffd000, #4fc3f7, #ffd000);
+      background-size: 200% 100%;
+      box-shadow: 0 0 10px #ffd000, 0 0 22px #4fc3f7;
+      animation:
+        fill-bar     7s cubic-bezier(0.4, 0, 0.2, 1) forwards,
+        bar-shimmer  1.6s linear infinite;
+    }
+
+    /* Mention bas de page */
+    #loader-hint {
+      position: relative;
+      font-size: 11px;
+      letter-spacing: 3px;
+      color: rgba(255, 255, 255, 0.28);
+      margin-bottom: 36px;
+      text-transform: uppercase;
+      animation: blink 1.8s ease-in-out infinite;
+    }
+
+    /* ── Keyframes ────────────────────────────────────────────── */
+    @keyframes fill-bar {
+      0%   { width: 0%;   }
+      /* Simule des "étapes" de chargement */
+      15%  { width: 12%;  }
+      30%  { width: 28%;  }
+      48%  { width: 47%;  }
+      62%  { width: 63%;  }
+      78%  { width: 80%;  }
+      92%  { width: 94%;  }
+      100% { width: 100%; }
+    }
+
+    @keyframes bar-shimmer {
+      0%   { background-position: 200% center; }
+      100% { background-position:   0% center; }
+    }
+
+    @keyframes shimmer {
+      0%   { background-position: 200% 50%; }
+      100% { background-position:   0% 50%; }
+    }
+
+    @keyframes pulse-filter {
+      0%, 100% {
+        filter:
+          drop-shadow(0 0  6px rgba(255, 208,   0, 0.95))
+          drop-shadow(0 0 18px rgba(255, 208,   0, 0.70))
+          drop-shadow(0 0 36px rgba(14,  165, 233, 0.55))
+          drop-shadow(0 0 60px rgba(14,  165, 233, 0.30));
+      }
+      50% {
+        filter:
+          drop-shadow(0 0 10px rgba(255, 208,   0, 1.00))
+          drop-shadow(0 0 28px rgba(255, 208,   0, 0.90))
+          drop-shadow(0 0 55px rgba(14,  165, 233, 0.75))
+          drop-shadow(0 0 90px rgba(14,  165, 233, 0.45));
+      }
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 0.28; }
+      50%       { opacity: 0.70; }
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* ── Accessibilité : réduction de mouvement ───────────────── */
+    @media (prefers-reduced-motion: reduce) {
+      #loader-bar-fill { animation: fill-bar 7s linear forwards; }
+      #loader-title, #loader-hint { animation: none; }
+    }
+  </style>
 </head>
+
 <body>
 
-  <!-- Loader avec ton image -->
-  <div id="loader" style="position: fixed; inset: 0; background: #0a001f; display: flex; align-items: center; justify-content: center; z-index: 9999; transition: opacity 0.8s;">
-    <img src="assets/neon-arena-clash1.png" alt="Neon Arena - Chargement" style="max-width: 90%; max-height: 90%; object-fit: contain;">
+  <!-- ═══ LOADER SPLASH SCREEN ════════════════════════════════════ -->
+  <div id="loader" role="status" aria-label="Chargement de Neon Arena">
+
+    <!-- Fond plein écran -->
+    <img id="loader-bg"
+         src="assets/neon-arena-clash1.png"
+         alt=""
+         aria-hidden="true" />
+
+    <!-- Voile dégradé -->
+    <div id="loader-veil" aria-hidden="true"></div>
+
+    <!-- Titre cyberpunk doré / bleu -->
+    <h1 id="loader-title">NEON ARENA</h1>
+    <p  id="loader-tagline">Clash&nbsp;&nbsp;·&nbsp;&nbsp;Tower Defense&nbsp;&nbsp;·&nbsp;&nbsp;Néon</p>
+
+    <!-- Barre de progression -->
+    <div id="loader-progress-wrap" role="progressbar"
+         aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"
+         aria-label="Progression du chargement">
+
+      <div id="loader-status">
+        <span id="loader-status-label">Chargement…</span>
+        <span id="loader-status-pct">0 %</span>
+      </div>
+
+      <div id="loader-bar-track">
+        <div id="loader-bar-fill"></div>
+      </div>
+    </div>
+
+    <p id="loader-hint" aria-hidden="true">Prépare toi au combat</p>
   </div>
 
-  <!-- Conteneur du canvas Phaser -->
+  <!-- ═══ CANVAS PHASER ═══════════════════════════════════════════ -->
   <div id="game-container"></div>
 
-  <!-- Scripts jeu (après Phaser via defer) -->
+  <!-- ═══ SCRIPTS ═════════════════════════════════════════════════ -->
   <script defer src="main.js"></script>
 
-  <!-- Suppression du loader une fois Phaser initialisé -->
   <script>
-    window.addEventListener('load', () => {
-      const loader = document.getElementById('loader');
-      // Petit délai pour laisser Phaser afficher son premier frame
-      setTimeout(() => loader.classList.add('hidden'), 800);
-    });
+    (() => {
+      const DURATION   = 7000; // ms — durée minimale du loader
+      const STEPS = [
+        { at: 0.15, label: 'Initialisation…'      },
+        { at: 0.30, label: 'Chargement assets…'   },
+        { at: 0.48, label: 'Compilation shaders…' },
+        { at: 0.63, label: 'Génération arène…'    },
+        { at: 0.80, label: 'Synchro réseau…'       },
+        { at: 0.94, label: 'Finalisation…'         },
+        { at: 1.00, label: 'Prêt !'                },
+      ];
+
+      const loader      = document.getElementById('loader');
+      const progressBar = document.getElementById('loader-progress-wrap');
+      const statusLabel = document.getElementById('loader-status-label');
+      const statusPct   = document.getElementById('loader-status-pct');
+      const barFill     = document.getElementById('loader-bar-fill');
+
+      const start   = performance.now();
+      let stepIndex = 0;
+      let rafId;
+
+      // Met à jour le label ARIA + texte en temps réel
+      function tick(now) {
+        const elapsed  = now - start;
+        const progress = Math.min(elapsed / DURATION, 1);
+        const pct      = Math.round(progress * 100);
+
+        // Labels d'étapes
+        while (stepIndex < STEPS.length && progress >= STEPS[stepIndex].at) {
+          statusLabel.textContent = STEPS[stepIndex].label;
+          stepIndex++;
+        }
+
+        statusPct.textContent = `${pct} %`;
+        progressBar.setAttribute('aria-valuenow', pct);
+
+        if (progress < 1) {
+          rafId = requestAnimationFrame(tick);
+        }
+      }
+
+      rafId = requestAnimationFrame(tick);
+
+      // Masquage après DURATION ms (attend aussi window.load)
+      let windowLoaded  = false;
+      let timerDone     = false;
+
+      function tryHide() {
+        if (windowLoaded && timerDone) {
+          cancelAnimationFrame(rafId);
+          loader.classList.add('hidden');
+          loader.addEventListener('transitionend', () => loader.remove(), { once: true });
+        }
+      }
+
+      setTimeout(() => { timerDone = true; tryHide(); }, DURATION);
+      window.addEventListener('load', () => { windowLoaded = true; tryHide(); });
+    })();
   </script>
 
 </body>
