@@ -28,28 +28,7 @@ const GAME_DURATION = 180; // secondes
 const MAX_ENERGY    = 10;
 
 // ─────────────────────────────────────────────
-// CONFIGURATION PHASER
-// ─────────────────────────────────────────────
-const config = {
-  type:            Phaser.AUTO,
-  width:           window.innerWidth,
-  height:          window.innerHeight,
-  parent:          'game-container',
-  backgroundColor: '#0a001f',
-  scene:           [BootScene, TitleScene, GameScene],
-  scale: {
-    mode:       Phaser.Scale.FIT,
-    autoCenter: Phaser.Scale.CENTER_BOTH,
-  },
-  input: {
-    activePointers: 3,
-  },
-};
-
-const game = new Phaser.Game(config);
-
-// ─────────────────────────────────────────────
-// BOOT SCENE – Chargement des assets
+// SCÈNE BOOT
 // ─────────────────────────────────────────────
 class BootScene extends Phaser.Scene {
   constructor() {
@@ -57,17 +36,17 @@ class BootScene extends Phaser.Scene {
   }
 
   preload() {
-    // Chargement des assets (textures, sons, atlas…)
-    // this.load.image('logo', 'assets/logo.png');
+    // Placeholder – chargement futur des assets
   }
 
   create() {
+    console.log('[BootScene] Chargement terminé → TitleScene');
     this.scene.start('TitleScene');
   }
 }
 
 // ─────────────────────────────────────────────
-// TITLE SCENE – Écran d'accueil premium
+// SCÈNE TITRE
 // ─────────────────────────────────────────────
 class TitleScene extends Phaser.Scene {
   constructor() {
@@ -75,309 +54,170 @@ class TitleScene extends Phaser.Scene {
   }
 
   create() {
-    const { width, height } = this.scale;
-    const cx = width / 2;
-    const cy = height / 2;
+    console.log('[TitleScene] Écran titre chargé');
 
-    this._createBackground(width, height);
-    this._createParticles(width, height);
-    this._createTitle(cx);
-    this._createSubtitle(cx, cy);
-    this._createPlayButton(cx, cy);
-    this._createFooterHint(cx, height);
-  }
+    // Fond gradient animé
+    const bg = this.add.rectangle(0, 0, this.scale.width, this.scale.height, 0x0a001f).setOrigin(0);
+    const gradient = this.add.rectangle(0, 0, this.scale.width, this.scale.height);
+    gradient.setFillGradientStyle(0x1a0033, 0x1a0033, 0x003366, 0x003366, 1);
 
-  // ── Fond dégradé violet → bleu nuit ──────────
-  _createBackground(width, height) {
-    this.add.rectangle(0, 0, width, height, COLORS.BG).setOrigin(0);
-
-    const gradient = this.add.rectangle(0, 0, width, height).setOrigin(0);
-    gradient.setFillGradientStyle(
-      COLORS.DARK_PURPLE, COLORS.DARK_PURPLE,
-      COLORS.DARK_BLUE,   COLORS.DARK_BLUE,
-      1
-    );
-  }
-
-  // ── Particules néon flottantes ────────────────
-  _createParticles(width, height) {
-    const emitter = this.add.particles(0, 0, null, {
-      x:          { min: 0,  max: width  },
-      y:          { min: 0,  max: height },
-      speedX:     { min: -30, max: 30   },
-      speedY:     { min: -30, max: 30   },
-      scale:      { start: 0.8, end: 0  },
-      alpha:      { start: 0.9, end: 0  },
-      blendMode:  'ADD',
-      lifespan:   4000,
-      frequency:  120,
-      tint:       [COLORS.CYAN, COLORS.MAGENTA, COLORS.GREEN, COLORS.ORANGE],
+    // Particules néon
+    this.add.particles(0, 0, null, {
+      speed: { min: 20, max: 60 },
+      scale: { start: 1, end: 0 },
+      blendMode: 'ADD',
+      lifespan: 4000,
+      frequency: 150,
+      tint: [0x00ffff, 0xff00ff, 0x00ff88, 0xff8800],
+      alpha: { start: 0.9, end: 0 }
     });
-  }
 
-  // ── Titre principal avec glitch + pulse ───────
-  _createTitle(cx) {
-    const title = this.add.text(cx, 120, 'NEON ARENA', {
-      ...FONTS.PRIMARY,
-      fontSize:        '80px',
-      color:           '#00ffff',
-      stroke:          '#ff00ff',
+    // Titre avec glitch + glow
+    const title = this.add.text(this.scale.width / 2, 120, 'NEON ARENA', {
+      fontSize: '80px',
+      fontFamily: 'Arial Black',
+      color: '#00ffff',
+      stroke: '#ff00ff',
       strokeThickness: 8,
-      shadow: { offsetX: 0, offsetY: 0, blur: 40, color: '#00ffff', fill: true },
+      shadow: { offsetX: 0, offsetY: 0, blur: 30, color: '#00ffff' }
     }).setOrigin(0.5);
 
-    // Glitch horizontal périodique
     this.tweens.add({
-      targets:     title,
-      x:           cx + 5,
-      yoyo:        true,
-      duration:    80,
-      repeat:      -1,
-      repeatDelay: 3500,
-      ease:        'Sine.easeInOut',
+      targets: title,
+      x: title.x + 4,
+      yoyo: true,
+      duration: 80,
+      repeat: -1,
+      repeatDelay: 3000,
+      ease: 'Sine.easeInOut'
     });
 
-    // Pulsation alpha (effet glow)
     this.tweens.add({
-      targets:  title,
-      alpha:    0.65,
-      yoyo:     true,
+      targets: title,
+      alpha: 0.7,
+      yoyo: true,
       duration: 1200,
-      repeat:   -1,
-      ease:     'Sine.easeInOut',
+      repeat: -1
     });
-  }
 
-  // ── Sous-titre ────────────────────────────────
-  _createSubtitle(cx, cy) {
-    this.add.text(cx, cy - 60, 'TOWER DEFENSE · NÉON · STRATÉGIE', {
-      ...FONTS.SECONDARY,
-      fontSize:        '22px',
-      color:           '#aaaaff',
-      letterSpacing:   4,
-      alpha:           0.8,
-    }).setOrigin(0.5);
-  }
-
-  // ── Bouton JOUER interactif ───────────────────
-  _createPlayButton(cx, cy) {
-    const btn = this.add.text(cx, cy + 80, '  JOUER  ', {
-      ...FONTS.PRIMARY,
-      fontSize:        '58px',
-      color:           '#ffffff',
+    // Bouton JOUER
+    const playButton = this.add.text(this.scale.width / 2, this.scale.height / 2 + 80, 'JOUER', {
+      fontSize: '60px',
+      fontFamily: 'Arial Black',
+      color: '#ffffff',
       backgroundColor: '#ff0066',
-      padding:         { x: 60, y: 28 },
-      shadow: { offsetX: 0, offsetY: 0, blur: 24, color: '#ff0066', fill: true },
+      padding: { x: 60, y: 30 },
+      shadow: { offsetX: 0, offsetY: 0, blur: 20, color: '#ff0066' }
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
 
-    // Pulse d'entrée
-    this.tweens.add({
-      targets:  btn,
-      scaleX:   1.04,
-      scaleY:   1.04,
-      yoyo:     true,
-      duration: 900,
-      repeat:   -1,
-      ease:     'Sine.easeInOut',
+    playButton.on('pointerover', () => {
+      playButton.setStyle({ backgroundColor: '#ff3399' });
+      playButton.setScale(1.1);
     });
 
-    // Hover
-    btn.on('pointerover', () => {
-      btn.setStyle({ backgroundColor: '#ff3399' });
-      this.tweens.killTweensOf(btn);
-      this.tweens.add({ targets: btn, scale: 1.12, duration: 120, ease: 'Back.easeOut' });
+    playButton.on('pointerout', () => {
+      playButton.setStyle({ backgroundColor: '#ff0066' });
+      playButton.setScale(1);
     });
 
-    btn.on('pointerout', () => {
-      btn.setStyle({ backgroundColor: '#ff0066' });
-      this.tweens.killTweensOf(btn);
-      this.tweens.add({ targets: btn, scale: 1.0, duration: 150, ease: 'Sine.easeOut' });
+    playButton.on('pointerdown', () => {
+      this.tweens.add({ targets: playButton, scale: 0.9, duration: 100 });
     });
 
-    // Press
-    btn.on('pointerdown', () => {
-      this.tweens.killTweensOf(btn);
-      this.tweens.add({ targets: btn, scale: 0.92, duration: 80, ease: 'Sine.easeIn' });
-    });
-
-    // Release → lancer la partie
-    btn.on('pointerup', () => {
-      this.tweens.killTweensOf(btn);
+    playButton.on('pointerup', () => {
       this.tweens.add({
-        targets:    btn,
-        scale:      1.08,
-        duration:   120,
-        ease:       'Back.easeOut',
+        targets: playButton,
+        scale: 1.1,
+        duration: 100,
         onComplete: () => {
-          this.cameras.main.fadeOut(400, 10, 0, 31);
-          this.cameras.main.once('camerafadeoutcomplete', () => {
-            this.scene.start('GameScene');
-          });
-        },
+          console.log('[TitleScene] Bouton cliqué → GameScene');
+          this.scene.start('GameScene');
+        }
       });
     });
-  }
 
-  // ── Hint bas de page ──────────────────────────
-  _createFooterHint(cx, height) {
-    const hint = this.add.text(cx, height - 70, '↑  CLIQUE POUR JOUER  ↑', {
-      ...FONTS.SECONDARY,
-      fontSize: '20px',
-      color:    '#888888',
+    // Texte hint
+    this.add.text(this.scale.width / 2, this.scale.height - 80, 'CLIQUE POUR JOUER', {
+      fontSize: '28px',
+      color: '#cccccc',
+      alpha: 0.7
     }).setOrigin(0.5);
-
-    this.tweens.add({
-      targets:  hint,
-      alpha:    0.2,
-      yoyo:     true,
-      duration: 1400,
-      repeat:   -1,
-      ease:     'Sine.easeInOut',
-    });
   }
 }
 
 // ─────────────────────────────────────────────
-// GAME SCENE – Plateau de jeu principal
+// SCÈNE JEU
 // ─────────────────────────────────────────────
 class GameScene extends Phaser.Scene {
   constructor() {
     super({ key: 'GameScene' });
   }
 
-  // ── Initialisation des variables d'état ───────
-  init() {
-    this._energy  = 0;
-    this._timeLeft = GAME_DURATION;
-  }
-
   create() {
-    const { width, height } = this.scale;
-    const cx = width / 2;
-    const cy = height / 2;
+    console.log('[GameScene] Arène chargée');
 
-    this._createBackground(width, height);
-    this._createPlayerCore(cy);
-    this._createEnemyCore(width, cy);
-    this._createDivider(cx, height);
-    this._createHUD(width, cx);
-  }
+    // Fond
+    this.add.rectangle(0, 0, this.scale.width, this.scale.height, 0x0a001f).setOrigin(0);
 
-  // ── Fond ──────────────────────────────────────
-  _createBackground(width, height) {
-    this.add.rectangle(0, 0, width, height, COLORS.BG).setOrigin(0);
-  }
-
-  // ── Noyau joueur (gauche) ─────────────────────
-  _createPlayerCore(cy) {
-    const core = this.add.circle(150, cy, 60, COLORS.CYAN, 0.15);
-    core.setStrokeStyle(4, COLORS.CYAN, 1);
-
-    // Halo animé
-    const halo = this.add.circle(150, cy, 60, COLORS.CYAN, 0);
-    halo.setStrokeStyle(2, COLORS.CYAN, 0.4);
-    this.tweens.add({
-      targets: halo, scaleX: 1.6, scaleY: 1.6, alpha: 0,
-      duration: 1600, repeat: -1, ease: 'Sine.easeOut',
-    });
-
-    this.add.text(150, cy - 100, 'TON NOYAU', {
-      ...FONTS.PRIMARY,
-      fontSize: '22px',
-      color:    '#00ffff',
-      alpha:    0.85,
-    }).setOrigin(0.5);
-  }
-
-  // ── Noyau ennemi (droite) ─────────────────────
-  _createEnemyCore(width, cy) {
-    const x    = width - 150;
-    const core = this.add.circle(x, cy, 60, COLORS.PINK_ENEMY, 0.15);
-    core.setStrokeStyle(4, COLORS.PINK_ENEMY, 1);
-
-    const halo = this.add.circle(x, cy, 60, COLORS.PINK_ENEMY, 0);
-    halo.setStrokeStyle(2, COLORS.PINK_ENEMY, 0.4);
-    this.tweens.add({
-      targets: halo, scaleX: 1.6, scaleY: 1.6, alpha: 0,
-      duration: 1600, repeat: -1, ease: 'Sine.easeOut',
-    });
-
-    this.add.text(x, cy - 100, 'NOYAU ENNEMI', {
-      ...FONTS.PRIMARY,
-      fontSize: '22px',
-      color:    '#ff00aa',
-      alpha:    0.85,
-    }).setOrigin(0.5);
-  }
-
-  // ── Ligne de séparation centrale ─────────────
-  _createDivider(cx, height) {
-    const line = this.add.graphics();
-    line.lineStyle(1, COLORS.CYAN, 0.15);
-    line.lineBetween(cx, 0, cx, height);
-  }
-
-  // ── HUD : énergie + timer ─────────────────────
-  _createHUD(width, cx) {
-    // Énergie
-    this._energyText = this.add.text(20, 20, '', {
-      ...FONTS.PRIMARY,
+    // Noyau joueur
+    const playerCore = this.add.circle(150, this.scale.height / 2, 60, 0x00ffff);
+    playerCore.setStrokeStyle(12, 0x00ffff, 0.8);
+    this.add.text(150, this.scale.height / 2 - 120, 'TON NOYAU', {
       fontSize: '28px',
-      color:    '#00ffff',
-    });
-
-    // Timer centré
-    this._timerText = this.add.text(cx, 30, '', {
-      ...FONTS.PRIMARY,
-      fontSize: '44px',
-      color:    '#ffffff',
-      shadow: { offsetX: 0, offsetY: 0, blur: 16, color: '#00ffff', fill: true },
+      color: '#00ffff',
+      stroke: '#00ffff',
+      strokeThickness: 4
     }).setOrigin(0.5);
 
-    // Barre d'énergie
-    const barBg = this.add.rectangle(20, 70, 220, 14, 0x222244).setOrigin(0);
-    this._energyBar = this.add.rectangle(20, 70, 0, 14, COLORS.CYAN).setOrigin(0);
+    // Noyau ennemi
+    const enemyCore = this.add.circle(this.scale.width - 150, this.scale.height / 2, 60, 0xff00aa);
+    enemyCore.setStrokeStyle(12, 0xff00aa, 0.8);
+    this.add.text(this.scale.width - 150, this.scale.height / 2 - 120, 'NOYAU ENNEMI', {
+      fontSize: '28px',
+      color: '#ff00aa',
+      stroke: '#ff00aa',
+      strokeThickness: 4
+    }).setOrigin(0.5);
 
-    this._refreshHUD();
+    // Énergie
+    this.energy = 0;
+    this.energyText = this.add.text(20, 20, 'ÉNERGIE : 0/10', { fontSize: '32px', color: '#ffffff' });
+
+    // Timer
+    this.timeLeft = GAME_DURATION;
+    this.timerText = this.add.text(this.scale.width / 2, 50, '03:00', { fontSize: '48px', color: '#ffffff' }).setOrigin(0.5);
   }
 
-  // ── Mise à jour du HUD ────────────────────────
-  _refreshHUD() {
-    const energyInt  = Math.floor(this._energy);
-    const minutes    = Math.floor(this._timeLeft / 60);
-    const seconds    = Math.floor(this._timeLeft % 60);
-    const timeStr    = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-    const barWidth   = Math.round((this._energy / MAX_ENERGY) * 220);
-
-    this._energyText.setText(`ÉNERGIE : ${energyInt} / ${MAX_ENERGY}`);
-    this._timerText.setText(timeStr);
-    this._timerText.setColor(this._timeLeft <= 30 ? '#ff4444' : '#ffffff');
-    this._energyBar.width = barWidth;
-  }
-
-  // ── Boucle principale ─────────────────────────
   update(time, delta) {
-    const dt = delta / 1000; // secondes
+    this.energy += delta / 5000;
+    if (this.energy > MAX_ENERGY) this.energy = MAX_ENERGY;
+    this.energyText.setText(`ÉNERGIE : \( {Math.floor(this.energy)}/ \){MAX_ENERGY}`);
 
-    this._energy   = Math.min(this._energy + dt * 0.2, MAX_ENERGY);
-    this._timeLeft = Math.max(this._timeLeft - dt, 0);
-
-    this._refreshHUD();
-
-    if (this._timeLeft === 0) {
-      this._onTimeUp();
-    }
-  }
-
-  // ── Fin de partie ─────────────────────────────
-  _onTimeUp() {
-    // Empêche les appels répétés
-    this.scene.pause();
-
-    this.cameras.main.fadeOut(600, 10, 0, 31);
-    this.cameras.main.once('camerafadeoutcomplete', () => {
-      // TODO : afficher un écran de résultat ou relancer TitleScene
-      this.scene.start('TitleScene');
-    });
+    this.timeLeft -= delta / 1000;
+    if (this.timeLeft < 0) this.timeLeft = 0;
+    const minutes = Math.floor(this.timeLeft / 60);
+    const seconds = Math.floor(this.timeLeft % 60);
+    this.timerText.setText(`\( {minutes.toString().padStart(2, '0')}: \){seconds.toString().padStart(2, '0')}`);
   }
 }
+
+// ─────────────────────────────────────────────
+// LANCEMENT FINAL (après toutes les classes)
+// ─────────────────────────────────────────────
+const config = {
+  type: Phaser.AUTO,
+  width: window.innerWidth,
+  height: window.innerHeight,
+  parent: 'game-container',
+  backgroundColor: COLORS.BG,
+  scene: [BootScene, TitleScene, GameScene],
+  scale: {
+    mode: Phaser.Scale.FIT,
+    autoCenter: Phaser.Scale.CENTER_BOTH
+  },
+  input: {
+    activePointers: 3
+  }
+};
+
+const game = new Phaser.Game(config);
