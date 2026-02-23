@@ -40,8 +40,8 @@ class BootScene extends Phaser.Scene {
   }
 
   create() {
-    console.log('[BootScene] Chargement terminé → TitleScene');
-    this.scene.start('TitleScene');
+    console.log('[BootScene] Chargement terminé → TutorialScene');
+    this.scene.start('TutorialScene');
   }
 }
 
@@ -205,6 +205,162 @@ class GameScene extends Phaser.Scene {
 }
 
 // ─────────────────────────────────────────────
+// SCÈNE TUTORIEL (4 slides style stories Telegram)
+// ─────────────────────────────────────────────
+class TutorialScene extends Phaser.Scene {
+  constructor() {
+    super({ key: 'TutorialScene' });
+    this.currentSlide = 0;
+    this.slides = [];
+    this.slideWidth = 0;
+  }
+
+  create() {
+    this.slideWidth = this.scale.width;
+
+    // Fond commun (noir néon ou ton image si tu veux)
+    this.add.rectangle(0, 0, this.scale.width * 4, this.scale.height, 0x0a001f).setOrigin(0);
+
+    // Création des 4 slides
+    this.createSlides();
+
+    // Container qui contient tous les slides et qui va swiper
+    this.slidesContainer = this.add.container(0, 0);
+    this.slides.forEach(slide => this.slidesContainer.add(slide));
+
+    // Input swipe (doigt gauche/droite)
+    this.input.on('pointerdown', pointer => {
+      this.startX = pointer.x;
+      this.startTime = this.game.getFrame();
+    });
+
+    this.input.on('pointerup', pointer => {
+      const deltaX = pointer.x - this.startX;
+      const deltaTime = this.game.getFrame() - this.startTime;
+
+      if (Math.abs(deltaX) > 100 && deltaTime < 30) { // swipe rapide
+        if (deltaX > 0) { // swipe droite → slide précédent
+          this.prevSlide();
+        } else { // swipe gauche → slide suivant
+          this.nextSlide();
+        }
+      }
+    });
+  }
+
+  createSlides() {
+    const slidesData = [
+      {
+        title: "Bienvenue dans Neon Arena",
+        text: "Duel stratégique en 3 minutes.\nDétruis le noyau ennemi tout en protégeant le tien.",
+        subtext: "Joue en solo contre IA ou en PvP mondial – sans téléchargement !"
+      },
+      {
+        title: "Ton deck de 8 cartes",
+        text: "Héros, drones, sorts, défenses…\nInvoque-les avec ton énergie.",
+        subtext: "Choisis bien tes 8 cartes parmi celles débloquées."
+      },
+      {
+        title: "L’énergie est la clé",
+        text: "L’énergie se recharge progressivement.\nChaque action coûte de l’énergie.",
+        subtext: "Anticipe et fais les bons choix tactiques !"
+      },
+      {
+        title: "Prêt à jouer ?",
+        text: "Swipe pour commencer ou appuie sur JOUER.",
+        subtext: "Bonne chance dans l’arène !"
+      }
+    ];
+
+    slidesData.forEach((data, index) => {
+      const slide = this.add.container(index * this.slideWidth, 0);
+
+      // Fond léger par slide (optionnel)
+      slide.add(this.add.rectangle(0, 0, this.slideWidth, this.scale.height, 0x0a001f, 0.8).setOrigin(0));
+
+      // Titre
+      const title = this.add.text(this.slideWidth / 2, 120, data.title, {
+        fontSize: '48px',
+        fontFamily: 'Orbitron',
+        color: '#00ffff',
+        stroke: '#ff00ff',
+        strokeThickness: 6,
+        align: 'center'
+      }).setOrigin(0.5);
+
+      // Texte principal
+      const text = this.add.text(this.slideWidth / 2, 300, data.text, {
+        fontSize: '32px',
+        fontFamily: 'Arial',
+        color: '#ffffff',
+        align: 'center',
+        wordWrap: { width: this.slideWidth - 80 }
+      }).setOrigin(0.5);
+
+      // Sous-texte
+      const sub = this.add.text(this.slideWidth / 2, this.scale.height - 140, data.subtext, {
+        fontSize: '24px',
+        color: '#cccccc',
+        align: 'center',
+        wordWrap: { width: this.slideWidth - 80 }
+      }).setOrigin(0.5);
+
+      slide.add([title, text, sub]);
+
+      // Bouton "Suivant" ou "JOUER" sur la dernière slide
+      if (index === 3) {
+        const playBtn = this.add.text(this.slideWidth / 2, this.scale.height - 80, 'JOUER MAINTENANT', {
+          fontSize: '40px',
+          fontFamily: 'Orbitron',
+          color: '#ffffff',
+          backgroundColor: '#ff0066',
+          padding: { x: 40, y: 20 }
+        }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+
+        playBtn.on('pointerup', () => {
+          this.scene.start('TitleScene'); // ou 'GameScene' si tu veux direct
+        });
+
+        slide.add(playBtn);
+      } else {
+        const nextText = this.add.text(this.slideWidth - 100, this.scale.height - 80, 'Suivant →', {
+          fontSize: '28px',
+          color: '#00ffff'
+        }).setOrigin(1, 0.5);
+
+        slide.add(nextText);
+      }
+
+      this.slides.push(slide);
+    });
+  }
+
+  nextSlide() {
+    if (this.currentSlide < 3) {
+      this.currentSlide++;
+      this.tweens.add({
+        targets: this.slidesContainer,
+        x: -this.currentSlide * this.slideWidth,
+        duration: 400,
+        ease: 'Power2'
+      });
+    }
+  }
+
+  prevSlide() {
+    if (this.currentSlide > 0) {
+      this.currentSlide--;
+      this.tweens.add({
+        targets: this.slidesContainer,
+        x: -this.currentSlide * this.slideWidth,
+        duration: 400,
+        ease: 'Power2'
+      });
+    }
+  }
+}
+
+// ─────────────────────────────────────────────
 // LANCEMENT FINAL (après toutes les classes)
 // ─────────────────────────────────────────────
 const config = {
@@ -213,7 +369,7 @@ const config = {
   height: window.innerHeight,
   parent: 'game-container',
   backgroundColor: COLORS.BG,
-  scene: [BootScene, TitleScene, GameScene],
+  scene: [BootScene, TutorialScene, TitleScene, GameScene],
   scale: {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH
