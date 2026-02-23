@@ -12,107 +12,39 @@
 
   <!-- ─── Open Graph (partage réseaux sociaux) ─────────────────── -->
   <meta property="og:title"       content="Neon Arena" />
-  <meta property="og:description" content="Tower Defense néon en temps réel." />
+  <meta property="og:description" content="Neon Arena – Tower Defense néon en temps réel. Déploie tes unités, protège ton noyau, écrase l'ennemi." />
+  <meta property="og:image"       content="assets/neon-arena-clash1.png" />
+  <meta property="og:url"         content="https://neon-arena-clash.vercel.app" />
   <meta property="og:type"        content="website" />
 
-  <!-- ─── Favicon inline SVG (aucun fichier externe requis) ───── -->
-  <link rel="icon" href="data:image/svg+xml,
-    <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'>
-      <circle cx='50' cy='50' r='45' fill='%230a001f' stroke='%2300ffff' stroke-width='6'/>
-      <circle cx='50' cy='50' r='20' fill='%2300ffff' opacity='.9'/>
-    </svg>" />
+  <!-- ─── Favicon SVG inline néon ──────────────────────────────── -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='45' fill='none' stroke='%2300ffff' stroke-width='8'/><circle cx='50' cy='50' r='30' fill='none' stroke='%23ff00ff' stroke-width='6'/><text x='50' y='60' font-family='Arial Black' font-size='40' fill='%23ffffff' text-anchor='middle'>NA</text></svg>" />
 
-  <title>Neon Arena</title>
+  <!-- ─── Google Fonts (Orbitron pour un look cyberpunk) ───────── -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
 
-  <!-- ─── Fonte Google ─────────────────────────────────────────── -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&display=swap"
-        rel="stylesheet" />
-
-  <!-- ─── Phaser 3 ─────────────────────────────────────────────── -->
-  <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"
-          defer></script>
-
-  <!-- ─── Styles ───────────────────────────────────────────────── -->
-  <link rel="stylesheet" href="style.css" />
-
-  <!-- ─── Styles critiques inline (évite le flash of unstyled) ── -->
+  <!-- ─── Styles critiques inline (reset + loader) ─────────────── -->
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    html, body {
-      width: 100%; height: 100%;
-      overflow: hidden;
-      background: #0a001f;
-      /* Fonte de fallback avant Phaser */
-      font-family: 'Orbitron', 'Arial Black', sans-serif;
-    }
-
-    #game-container {
-      width: 100%; height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    /* Spinner de chargement affiché avant Phaser */
-    #loader {
-      position: fixed;
-      inset: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 24px;
-      background: #0a001f;
-      z-index: 999;
-      transition: opacity 0.5s ease;
-    }
-
-    #loader.hidden {
-      opacity: 0;
-      pointer-events: none;
-    }
-
-    #loader-title {
-      font-family: 'Orbitron', sans-serif;
-      font-size: clamp(28px, 6vw, 56px);
-      font-weight: 900;
-      color: #00ffff;
-      text-shadow: 0 0 20px #00ffff, 0 0 40px #ff00ff;
-      letter-spacing: 6px;
-    }
-
-    #loader-ring {
-      width: 52px; height: 52px;
-      border: 3px solid rgba(0, 255, 255, 0.15);
-      border-top-color: #00ffff;
-      border-radius: 50%;
-      animation: spin 0.9s linear infinite;
-      box-shadow: 0 0 12px #00ffff;
-    }
-
-    #loader-label {
-      font-family: 'Orbitron', sans-serif;
-      font-size: 13px;
-      color: rgba(255, 255, 255, 0.4);
-      letter-spacing: 3px;
-      text-transform: uppercase;
-    }
-
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
+    html, body { height: 100%; overflow: hidden; background: #0a001f; font-family: 'Orbitron', sans-serif; }
+    #game-container { width: 100%; height: 100%; }
+    #loader { position: fixed; inset: 0; background: #0a001f; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; transition: opacity 0.8s; }
+    #loader.hidden { opacity: 0; pointer-events: none; }
+    #loader-ring { width: 80px; height: 80px; border: 6px solid #00ffff; border-top: 6px solid transparent; border-radius: 50%; animation: spin 1.2s linear infinite; margin-bottom: 20px; }
+    #loader-label { color: #00ffff; font-size: 24px; text-shadow: 0 0 10px #00ffff; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
   </style>
-</head>
 
+  <!-- ─── Phaser CDN (defer pour perf) ─────────────────────────── -->
+  <script defer src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
+</head>
 <body>
-  <!-- Écran de chargement (masqué dès que Phaser est prêt) -->
-  <div id="loader" role="status" aria-label="Chargement en cours">
-    <span id="loader-title">NEON ARENA</span>
-    <div  id="loader-ring"  aria-hidden="true"></div>
-    <span id="loader-label">Chargement…</span>
+
+  <!-- Loader avec ton image -->
+  <div id="loader" style="position: fixed; inset: 0; background: #0a001f; display: flex; align-items: center; justify-content: center; z-index: 9999; transition: opacity 0.8s;">
+    <img src="assets/neon-arena-clash1.png" alt="Neon Arena - Chargement" style="max-width: 90%; max-height: 90%; object-fit: contain;">
   </div>
 
   <!-- Conteneur du canvas Phaser -->
@@ -129,5 +61,6 @@
       setTimeout(() => loader.classList.add('hidden'), 800);
     });
   </script>
+
 </body>
 </html>
