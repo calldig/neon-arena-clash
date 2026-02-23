@@ -1,137 +1,166 @@
-// === CONFIG PHASER ===
+// CONFIG PHASER
 const config = {
   type: Phaser.AUTO,
   width: window.innerWidth,
   height: window.innerHeight,
   parent: 'game-container',
   backgroundColor: '#0a001f',
-  scene: [],  // On ajoute les scènes après leur définition
+  scene: [BootScene, TitleScene, GameScene],
   scale: {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH
   },
   input: {
-    activePointers: 3  // Support multi-touch mobile + Telegram
+    activePointers: 3
   }
 };
 
-// === SCÈNE BOOT ===
+const game = new Phaser.Game(config);
+
+// SCÈNE BOOT (chargement)
 class BootScene extends Phaser.Scene {
   constructor() {
     super({ key: 'BootScene' });
   }
-
   preload() {
-    // Placeholder futur
-    // this.load.image('background', 'assets/neon-bg.png');
+    // On ajoutera des assets ici plus tard
   }
-
   create() {
-    console.log('BootScene OK → passe à TitleScene');
     this.scene.start('TitleScene');
   }
 }
 
-// === SCÈNE TITRE ===
+// SCÈNE TITRE – ultra embellie
 class TitleScene extends Phaser.Scene {
   constructor() {
     super({ key: 'TitleScene' });
   }
 
   create() {
-    console.log('TitleScene chargée');
+    // Fond gradient animé (néon violet-cyan)
+    const bg = this.add.rectangle(0, 0, this.scale.width, this.scale.height, 0x0a001f).setOrigin(0);
+    const gradient = this.add.rectangle(0, 0, this.scale.width, this.scale.height);
+    gradient.setFillGradientStyle(0x1a0033, 0x1a0033, 0x003366, 0x003366, 1);
 
-    // Fond
-    this.add.rectangle(0, 0, this.scale.width, this.scale.height, 0x0a001f).setOrigin(0);
+    // Particules néon flottantes (glow)
+    this.add.particles(0, 0, null, {
+      speed: { min: 20, max: 60 },
+      scale: { start: 1, end: 0 },
+      blendMode: 'ADD',
+      lifespan: 4000,
+      frequency: 150,
+      tint: [0x00ffff, 0xff00ff, 0x00ff88, 0xff8800],
+      alpha: { start: 0.9, end: 0 }
+    });
 
-    // Titre
-    const title = this.add.text(this.scale.width / 2, 150, 'NEON ARENA', {
-      fontSize: '64px',
-      fontFamily: 'Arial',
+    // Titre avec glitch + glow multiple
+    const title = this.add.text(this.scale.width / 2, 120, 'NEON ARENA', {
+      fontSize: '80px',
+      fontFamily: 'Arial Black',
       color: '#00ffff',
       stroke: '#ff00ff',
-      strokeThickness: 6,
-      shadow: { offsetX: 0, offsetY: 0, blur: 20, color: '#00ffff' }
+      strokeThickness: 8,
+      shadow: { offsetX: 0, offsetY: 0, blur: 30, color: '#00ffff' }
     }).setOrigin(0.5);
 
-    // Bouton JOUER
-    const playButton = this.add.text(this.scale.width / 2, 300, 'JOUER', {
-      fontSize: '48px',
-      color: '#ffffff',
-      backgroundColor: '#ff00aa',
-      padding: { x: 40, y: 20 }
-    }).setOrigin(0.5).setInteractive({ useHandCursor: true });
-
-    // Feedback visuel sur hover/touch
-    playButton.on('pointerover', () => {
-      playButton.setStyle({ backgroundColor: '#ff33cc' });
-    });
-    playButton.on('pointerout', () => {
-      playButton.setStyle({ backgroundColor: '#ff00aa' });
-    });
-
-    // Clic → lance la scène jeu
-    playButton.on('pointerup', () => {
-      console.log('BOUTON JOUER CLIQUE → lancement GameScene');
-      this.scene.start('GameScene');
-    });
-
-    // Glow titre
+    // Effet glitch léger sur titre
     this.tweens.add({
       targets: title,
-      alpha: 0.6,
+      x: title.x + 4,
       yoyo: true,
-      duration: 1500,
+      duration: 80,
+      repeat: -1,
+      repeatDelay: 3000,
+      ease: 'Sine.easeInOut'
+    });
+
+    // Glow pulsant
+    this.tweens.add({
+      targets: title,
+      alpha: 0.7,
+      yoyo: true,
+      duration: 1200,
       repeat: -1
     });
+
+    // Bouton JOUER premium
+    const playButton = this.add.text(this.scale.width / 2, this.scale.height / 2 + 80, 'JOUER', {
+      fontSize: '60px',
+      fontFamily: 'Arial Black',
+      color: '#ffffff',
+      backgroundColor: '#ff0066',
+      padding: { x: 60, y: 30 },
+      shadow: { offsetX: 0, offsetY: 0, blur: 20, color: '#ff0066' }
+    }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+
+    // Animation hover
+    playButton.on('pointerover', () => {
+      playButton.setStyle({ backgroundColor: '#ff3399', scale: 1.1 });
+    });
+    playButton.on('pointerout', () => {
+      playButton.setStyle({ backgroundColor: '#ff0066', scale: 1 });
+    });
+
+    // Animation clic down/up + lancement
+    playButton.on('pointerdown', () => {
+      this.tweens.add({
+        targets: playButton,
+        scale: 0.9,
+        duration: 100,
+        ease: 'Sine.easeIn'
+      });
+    });
+
+    playButton.on('pointerup', () => {
+      this.tweens.add({
+        targets: playButton,
+        scale: 1.1,
+        duration: 100,
+        ease: 'Sine.easeOut',
+        onComplete: () => {
+          this.scene.start('GameScene');
+        }
+      });
+    });
+
+    // Texte subtil "Clique pour jouer"
+    this.add.text(this.scale.width / 2, this.scale.height - 80, 'CLIQUE POUR JOUER', {
+      fontSize: '28px',
+      color: '#cccccc',
+      alpha: 0.7
+    }).setOrigin(0.5);
   }
 }
 
-// === SCÈNE JEU ===
+// SCÈNE JEU (à embellir ensuite)
 class GameScene extends Phaser.Scene {
   constructor() {
     super({ key: 'GameScene' });
   }
 
   create() {
-    console.log('GameScene chargée');
-
-    // Fond
+    // Fond simple pour l'instant
     this.add.rectangle(0, 0, this.scale.width, this.scale.height, 0x0a001f).setOrigin(0);
 
-    // Noyau joueur
     const playerCore = this.add.circle(150, this.scale.height / 2, 60, 0x00ffff);
     playerCore.setStrokeStyle(12, 0x00ffff, 0.8);
     this.add.text(150, this.scale.height / 2 - 120, 'TON NOYAU', {
       fontSize: '28px',
-      color: '#00ffff',
-      stroke: '#00ffff',
-      strokeThickness: 4
+      color: '#00ffff'
     }).setOrigin(0.5);
 
-    // Noyau ennemi
     const enemyCore = this.add.circle(this.scale.width - 150, this.scale.height / 2, 60, 0xff00aa);
     enemyCore.setStrokeStyle(12, 0xff00aa, 0.8);
     this.add.text(this.scale.width - 150, this.scale.height / 2 - 120, 'NOYAU ENNEMI', {
       fontSize: '28px',
-      color: '#ff00aa',
-      stroke: '#ff00aa',
-      strokeThickness: 4
+      color: '#ff00aa'
     }).setOrigin(0.5);
 
-    // Énergie
     this.energy = 0;
-    this.energyText = this.add.text(20, 20, 'ÉNERGIE : 0/10', {
-      fontSize: '32px',
-      color: '#ffffff'
-    });
+    this.energyText = this.add.text(20, 20, 'ÉNERGIE : 0/10', { fontSize: '32px', color: '#ffffff' });
 
-    // Timer
     this.timeLeft = 180;
-    this.timerText = this.add.text(this.scale.width / 2, 50, '03:00', {
-      fontSize: '48px',
-      color: '#ffffff'
-    }).setOrigin(0.5);
+    this.timerText = this.add.text(this.scale.width / 2, 50, '03:00', { fontSize: '48px', color: '#ffffff' }).setOrigin(0.5);
   }
 
   update(time, delta) {
@@ -146,7 +175,3 @@ class GameScene extends Phaser.Scene {
     this.timerText.setText(`${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`);
   }
 }
-
-// === LANCE PHASER ===
-config.scene = [BootScene, TitleScene, GameScene];
-const game = new Phaser.Game(config);
