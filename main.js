@@ -56,12 +56,15 @@ class TitleScene extends Phaser.Scene {
   create() {
     console.log('[TitleScene] Écran titre chargé');
 
-    // Fond gradient animé
-    const bg = this.add.rectangle(0, 0, this.scale.width, this.scale.height, 0x0a001f).setOrigin(0);
-    const gradient = this.add.rectangle(0, 0, this.scale.width, this.scale.height);
-    gradient.setFillGradientStyle(0x1a0033, 0x1a0033, 0x003366, 0x003366, 1);
+    // Fond noir de base
+    this.add.rectangle(0, 0, this.scale.width, this.scale.height, 0x0a001f).setOrigin(0);
 
-    // Particules néon
+    // Gradient animé – CORRECTION : utiliser Graphics au lieu de Rectangle
+    const gradient = this.add.graphics();
+    gradient.fillGradientStyle(0x1a0033, 0x1a0033, 0x003366, 0x003366, 1);
+    gradient.fillRect(0, 0, this.scale.width, this.scale.height);
+
+    // Particules néon flottantes
     this.add.particles(0, 0, null, {
       speed: { min: 20, max: 60 },
       scale: { start: 1, end: 0 },
